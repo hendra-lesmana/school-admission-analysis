@@ -27,27 +27,7 @@ class StreamlitScraper:
             'Referer': 'https://spmb.jabarprov.go.id/'
         })
 
-    def fetch_school_options(self, npsn: str) -> Optional[Dict]:
-        """Fetch school options and major IDs from school API"""
-        school_url = f"https://spmb.jabarprov.go.id/api/public/school/{npsn}?populate=options"
 
-        try:
-            response = self.session.get(school_url, timeout=15)
-            response.raise_for_status()
-            data = response.json()
-
-            if data.get('code') == 200:
-                return data
-            else:
-                st.error(f"School API returned error code: {data.get('code')} - {data.get('message', 'Unknown error')}")
-                return None
-
-        except requests.exceptions.RequestException as e:
-            st.error(f"Error fetching school options: {e}")
-            return None
-        except json.JSONDecodeError as e:
-            st.error(f"Error parsing school options JSON: {e}")
-            return None
     
     def fetch_page(self, page: int = 1, limit: int = 100, npsn: str = '20227910',
                    option_type: str = 'zonasi', orderby: str = 'distance_1',
@@ -247,66 +227,21 @@ def main():
         col1, col2 = st.columns([2, 1])
 
         with col1:
-            if st.button("🔍 Load School Options", key="load_options"):
-                with st.spinner("Loading school options..."):
-                    school_data = scraper.fetch_school_options(npsn)
+            st.info("🎓 **SMKN 4 PADALARANG - Prestasi Rapor Analysis**")
+            st.write("📊 Sekolah ini memiliki 6 jurusan dengan program prestasi-rapor:")
+            st.write("1. Pengembangan Perangkat Lunak dan Gim")
+            st.write("2. Pemasaran")
+            st.write("3. Teknik Kimia Industri")
+            st.write("4. Teknik Jaringan Komputer dan Telekomunikasi")
+            st.write("5. Teknik Elektronika")
+            st.write("6. Agribisnis Tanaman")
+            st.write("")
+            st.write("🚀 Gunakan tombol di bawah untuk mengambil data semua jurusan.")
 
-                    if school_data and school_data.get('result'):
-                        school_info = school_data['result']
-                        st.session_state['school_data'] = school_info
+            # Add scraping option
+            st.subheader("🎯 Scraping")
 
-                        st.success(f"✅ Loaded options for: {school_info.get('name', 'Unknown School')}")
-
-                        # Display school statistics
-                        stats = school_info.get('statistics', [])
-                        if stats and isinstance(stats, list):
-                            st.subheader("📊 School Statistics")
-
-                            # Calculate totals from all options
-                            total_registrations = sum(stat.get('total_registration', 0) for stat in stats)
-                            total_verified = sum(stat.get('total_verified', 0) for stat in stats)
-                            total_not_verified = sum(stat.get('total_not_verified', 0) for stat in stats)
-                            total_canceled = sum(stat.get('total_canceled', 0) for stat in stats)
-
-                            col_stats1, col_stats2, col_stats3, col_stats4 = st.columns(4)
-
-                            with col_stats1:
-                                st.metric("Total Registrations", total_registrations)
-                            with col_stats2:
-                                st.metric("Verified", total_verified)
-                            with col_stats3:
-                                st.metric("Not Verified", total_not_verified)
-                            with col_stats4:
-                                st.metric("Canceled", total_canceled)
-                    else:
-                        st.error("❌ Failed to load school options")
-
-            # Show school information if loaded
-            if 'school_data' in st.session_state:
-                school_info = st.session_state['school_data']
-
-                # Show available prestasi options for information
-                stats = school_info.get('statistics', [])
-                prestasi_options = []
-                if isinstance(stats, list):
-                    prestasi_options = [stat for stat in stats if 'PRESTASI NILAI RAPOR' in stat.get('option', '')]
-
-                if prestasi_options:
-                    st.subheader("🎓 Available Prestasi-Rapor Programs")
-                    st.info(f"This school offers {len(prestasi_options)} prestasi-rapor programs. The scraper below will collect data from ALL programs.")
-
-                    # Show available prestasi options
-                    for i, option in enumerate(prestasi_options, 1):
-                        option_name = option.get('option', 'Unknown')
-                        registrations = option.get('total_registration', 0)
-                        st.write(f"{i}. {option_name} ({registrations} registrations)")
-                else:
-                    st.warning("⚠️ No prestasi-rapor programs found for this school")
-
-                # Add scraping option
-                st.subheader("🎯 Scraping")
-
-                if st.button("🚀 Scrape ALL Prestasi-Rapor Data", type="primary", key="scrape_all_prestasi"):
+            if st.button("🚀 Scrape ALL Prestasi-Rapor Data", type="primary", key="scrape_all_prestasi"):
                     progress_bar = st.progress(0)
                     status_text = st.empty()
 
